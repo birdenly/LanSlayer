@@ -22,6 +22,7 @@ permissions:
 jobs:
   xdelta_steam:
     uses: ./.github/workflows/xdelta_steam.yml
+    secrets: inherit
 
   launcher_linux:
     uses: ./.github/workflows/launcher_linux.yml
