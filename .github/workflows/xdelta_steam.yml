@@ -1,0 +1,99 @@
+name: Build XDelta (Steam)
+
+# This workflow uploads latest .xdelta patches
+# generated off of the .r2 patches
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y radare2 xdelta3
+
+      - name: Install DepotDownloader
+        run: |
+          mkdir -p "$HOME/depotdownloader"
+          cd "$HOME/depotdownloader"
+          curl -fsSL https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_3.4.0/DepotDownloader-linux-x64.zip -o depotdownloader.zip
+          unzip depotdownloader.zip
+          chmod +x DepotDownloader
+
+      - name: Configure file list
+        run: |
+          cat > "$HOME/depotdownloader/files.txt" <<EOF
+          DOOMx64.exe
+          DOOMx64vk.exe
+          EOF
+
+      - name: Initialize DepotDownloader authentication
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+        run: |
+          echo "::add-mask::$STEAM_USERNAME"
+          cd "$HOME/depotdownloader"
+          ./DepotDownloader -username "$STEAM_USERNAME" -remember-password || true
+
+      - name: Restore DepotDownloader authentication
+        env:
+          STEAM_CONFIG: ${{ secrets.STEAM_CONFIG }}
+        run: |
+          ISOLATED_STORAGE_DIR=$(find "$HOME/.local/share/IsolatedStorage" -type d -path '*/Url.*/AssemFiles' -print -quit)
+
+          if [ -z "$ISOLATED_STORAGE_DIR" ]; then
+            echo "DepotDownloader IsolatedStorage directory was not created."
+            exit 1
+          fi
+
+          if [ -z "$STEAM_CONFIG" ]; then
+            echo "STEAM_CONFIG secret is empty."
+            exit 1
+          fi
+
+          printf '%s' "$STEAM_CONFIG" | base64 -d > "$ISOLATED_STORAGE_DIR/account.config"
+
+      - name: Download selected depot files
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+        run: |
+          echo "::add-mask::$STEAM_USERNAME"
+          echo "STEAM_DEPOT_DIR=$HOME/steamcmd/steamapps/content/app_379720/depot_379721" >> "$GITHUB_ENV"
+
+          mkdir -p "$HOME/steamcmd/steamapps/content/app_379720/depot_379721"
+
+          cd "$HOME/depotdownloader"
+          ./DepotDownloader \
+            -app 379720 \
+            -depot 379721 \
+            -manifest 7402417666934369131 \
+            -username "$STEAM_USERNAME" \
+            -remember-password \
+            -filelist files.txt \
+            -dir "$HOME/steamcmd/steamapps/content/app_379720/depot_379721"
+
+          ls -lah "$HOME/steamcmd/steamapps/content/app_379720/depot_379721"
+
+      - name: Build XDeltas
+        run: |
+          cd "$STEAM_DEPOT_DIR"
+          mkdir Original
+          cp *.exe Original
+          r2 -q -w -nn -i "$GITHUB_WORKSPACE/Launcher/patches/DOOM/r2/DOOMx64.exe.r2" -c 'wci' DOOMx64.exe
+          r2 -q -w -nn -i "$GITHUB_WORKSPACE/Launcher/patches/DOOM/r2/DOOMx64vk.exe.r2" -c 'wci' DOOMx64vk.exe
+          xdelta3 -e -s Original/DOOMx64.exe DOOMx64.exe DOOMx64.exe.xdelta
+          xdelta3 -e -s Original/DOOMx64vk.exe DOOMx64vk.exe DOOMx64vk.exe.xdelta
+
+      - name: Upload downloaded files
+        uses: actions/upload-artifact@v7
+        with:
+          name: doom-depot-379721
+          path: ${{ env.STEAM_DEPOT_DIR }}/*.xdelta
+          if-no-files-found: error

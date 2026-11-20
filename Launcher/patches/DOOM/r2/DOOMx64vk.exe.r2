@@ -1,0 +1,442 @@
+# DOOMx64vk.exe patch script (DOOM (Vulkan))
+# usage: r2 -w -i DOOMx64vk.exe.r2 DOOMx64vk.exe   (wcj = show diff, wq = write, wcr = discard)
+e io.va=false
+e io.cache=true
+
+# name: UpdateTitleStorage Server Skip (Disable Online TSS)
+# offset: 0x159B5A0
+# original: 75 20
+# patched:  90 90
+# description: Bypasses online Hydra/Bethesda title storage check and jumps straight to built-in 'disabled' routine (sets bTitleStorageReady = 1 immediately).
+wx 90 90 @ 0x159B5A0
+
+# name: IsTitleStorageReady Unlock (Force True)
+# offset: 0x1596190
+# original: 0f b6 81 00 06 03 00 c3
+# patched:  b8 01 00 00 00 c3 90 90
+# description: Forces idSessionLocal::IsTitleStorageReady() to return true (1) immediately, dismissing the 'Loading title storage' screen.
+wx b8 01 00 00 00 c3 90 90 @ 0x1596190
+
+# name: DedicatedServerGate Pass (Skip Gatekeeper & Force Gate Passed)
+# offset: 0xF9EE20
+# original: 48 83 ec 28 48 8b
+# patched:  b8 01 00 00 00 c3
+# description: Forces IsDedicatedServerGatePassed to return 1 (true) immediately, preventing HTTP gatekeeper timeout (198.20.198.48/gatekeeper) and bypassing 'Unable to reach dedicated server endpoints' modal.
+wx b8 01 00 00 00 c3 @ 0xF9EE20
+
+# name: CanStartPrivateMatch Bypass (Force Can Start)
+# offset: 0xF8A840
+# original: 4c 8b dc 55 57 48
+# patched:  b8 01 00 00 00 c3
+# description: Forces idLobbyController::CanStartPrivateMatch to return 1 (true) immediately, bypassing player/server requirements.
+wx b8 01 00 00 00 c3 @ 0xF8A840
+
+# name: PrivateMatch MinPlayers Bypass (Allow Solo / Any Count)
+# offset: 0x103E9B9
+# original: 75 69
+# patched:  eb 69
+# description: Bypasses the minimum player count check in lobby start action, preventing '#str_dlg_mp_empty_team' warning.
+wx eb 69 @ 0x103E9B9
+
+# name: StartMatch Force Local Host (Bypass Cloud Dedicated Route)
+# offset: 0x159AA70
+# original: 0f 84 e1 02 00 00
+# patched:  e9 e2 02 00 00 90
+# description: Unconditionally routes idSessionLocal::StartMatch into local host map loading, bypassing cloud server allocation.
+wx e9 e2 02 00 00 90 @ 0x159AA70
+
+# name: EndpointPingCheck Pass (Fix 'Unable to reach dedicated server endpoints')
+# offset: 0xF9E6E0
+# original: 48 83 ec 28 48 8b
+# patched:  b8 01 00 00 00 c3
+# description: Forces the dedicated server endpoint ping check (checked when pressing PRIVATE MATCH) to pass, preventing dialog 0x70 #str_dlg_no_valid_endpoint.
+wx b8 01 00 00 00 c3 @ 0xF9E6E0
+
+# name: P2PSessionRequest Friends Crash Fix (Allow LAN Players to Join)
+# offset: 0x1913BC3
+# original: ff 15 af 03 6b 00 48 8b 17 48 8b c8 4c 8b 00 41 ff 50 38
+# patched:  90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90
+# description: Bypasses SteamFriends::GetFriendPersonaName in OnP2PSessionRequest, preventing emulator crash 0xC0000005 when players join and allowing AcceptP2PSessionWithUser to complete.
+wx 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 @ 0x1913BC3
+
+# name: StartMatch Skip Dedicated Server Allocation (Force Local StartLoading)
+# offset: 0x159ADA7
+# original: 77 26
+# patched:  eb 26
+# description: Bypasses SetState(0xC / State_Find_Dedicated_Instance) in idSessionLocal::StartMatch when starting a Private Match, jumping directly to StartLoading() as local listen server and preventing '#str_dlg_no_dedicated_servers_found' (dialog 0x58).
+wx eb 26 @ 0x159ADA7
+
+# name: giveXP CVar Default True (Enable XP Gain & Level-Up)
+# offset: 0x167B0F
+# original: 4c 8d 05 7a ef e7 01
+# patched:  4c 8d 05 4e 87 e8 01
+# description: Changes the default value of Title Storage CVar 'giveXP' from '0' to '1', enabling the HUD XP bar, XP callouts, and level-up calculation in offline/LAN mode.
+wx 4c 8d 05 4e 87 e8 01 @ 0x167B0F
+
+# name: metrics_allowStatsAndXPInPrivateMatch Default True (Enable Private Match XP)
+# offset: 0x130DCF
+# original: 4c 8d 05 ba 5c eb 01
+# patched:  4c 8d 05 8e f4 eb 01
+# description: Changes the default value of 'metrics_allowStatsAndXPInPrivateMatch' from '0' to '1', allowing XP, stats, medals, and challenges to be earned and saved to profile.bin in Private Matches.
+wx 4c 8d 05 8e f4 eb 01 @ 0x130DCF
+
+# name: hud_showXPGainsInPrivateMatch Default True (Show +XP Popups in Private Match)
+# offset: 0x13015F
+# original: 4c 8d 05 2a 69 eb 01
+# patched:  4c 8d 05 fe 00 ec 01
+# description: Changes the default value of 'hud_showXPGainsInPrivateMatch' from '0' to '1', showing +XP popups on the HUD during Private Matches.
+wx 4c 8d 05 fe 00 ec 01 @ 0x13015F
+
+# name: UpdateMatchResults Private Match Post-Match XP Summary Enable
+# offset: 0x3BE7B6
+# original: 0f 85 14 03 00 00
+# patched:  90 90 90 90 90 90
+# description: Allows idGameLocal::UpdateMatchResults to populate the Post-Match XP Summary (previousXP, currentXP, levelsGainedInMatch, matchXP) at the end of Private Matches.
+wx 90 90 90 90 90 90 @ 0x3BE7B6
+
+# name: allowTaunts CVar Default True (Enable In-Game Taunts)
+# offset: 0x167A9F
+# original: 4c 8d 05 ea ef e7 01
+# patched:  4c 8d 05 be 87 e8 01
+# description: Changes the default value of Title Storage CVar 'allowTaunts' from '0' to '1', enabling in-game taunts in offline/LAN mode.
+wx 4c 8d 05 be 87 e8 01 @ 0x167A9F
+
+# name: LaunchSnapmaps Skip Offline Error (Fix SnapMap Notice Dialog)
+# offset: 0xFA0508
+# original: 0f 84 a3 00 00 00
+# patched:  e9 a4 00 00 00 90
+# description: Bypasses the Hydra signed-in check in idMenuManager_Shell::LaunchSnapmaps when IsTitleStorageReady() is true, jumping directly to ShowScreen(snapmaps-hub) and preventing 'There was an error connecting to Doom Online Services'.
+wx e9 a4 00 00 00 90 @ 0xFA0508
+
+# name: SnapmapHub OnError Silence (Suppress Hub Background Query Notice)
+# offset: 0x1081300
+# original: 48 89 5c 24 18
+# patched:  c3 90 90 90 90
+# description: Prevents idMenuScreen_Shell_SnapmapHub::OnError from popping up dialog 0x6c when online featured tiles cannot be fetched.
+wx c3 90 90 90 90 @ 0x1081300
+
+# name: SnapBrowserHelper OnError Silence (Suppress Browser Query Notice)
+# offset: 0xFD0B30
+# original: 48 89 5c 24 10
+# patched:  c3 90 90 90 90
+# description: Prevents idSnapBrowserHelper::OnError from popping up dialog 0x6c when browsing offline maps.
+wx c3 90 90 90 90 @ 0xFD0B30
+
+# name: SnapmapMapInfo Play Bypass Solo (Route Play to SnapMap Lobby)
+# offset: 0x112AB0E
+# original: 74 1d
+# patched:  90 90
+# description: Bypasses the IsHydraSignedIn() branch in SnapmapMapInfo, routing map play actions to LaunchSnapMapLobbyForPublishedMap (Multiplayer Co-op Lobby) instead of LaunchPublishedSnapMapForOfflinePlay (solo offline play).
+wx 90 90 @ 0x112AB0E
+
+# name: SnapBrowserHelper Play Bypass Solo (Route Browser Play to SnapMap Lobby)
+# offset: 0xFD14B5
+# original: 74 1c
+# patched:  90 90
+# description: Bypasses the IsHydraSignedIn() branch in SnapBrowserHelper::OnLoadForPlayCallback, routing map load actions to LaunchSnapMapLobbyForPublishedMap instead of solo offline play.
+wx 90 90 @ 0xFD14B5
+
+# name: LaunchSnapMapLobby Force P2P Hosting 1 (Skip Cloud Search Parms)
+# offset: 0xFA0188
+# original: 75 16
+# patched:  eb 16
+# description: Bypasses matchmaking search parameters setup in LaunchSnapMapLobbyForPublishedMap.
+wx eb 16 @ 0xFA0188
+
+# name: LaunchSnapMapLobby Force P2P Hosting 2 (Create Local Matchmaking Lobby)
+# offset: 0xFA02A8
+# original: 75 1e
+# patched:  eb 1e
+# description: Unconditionally routes LaunchSnapMapLobbyForPublishedMap to session->CreateMatchmakingLobby (snap.host.published), creating an immediate local P2P hosting lobby instead of searching cloud matchmaking.
+wx eb 1e @ 0xFA02A8
+
+# name: SnapmapLobby MinPlayers Bypass (Allow Solo / Any Player Count to Start)
+# offset: 0x108E180
+# original: 75 57
+# patched:  eb 57
+# description: Bypasses the minimum player requirement check in idMenuScreen_Shell_SnapmapLobby::TryToStartMatch, allowing the host to start the SnapMap co-op match with any number of players.
+wx eb 57 @ 0x108E180
+
+# name: SnapmapHub IsOnline Force True (Enable Full Online Layout & Tabs)
+# offset: 0x107E330
+# original: 40 53 48 83 ec 20
+# patched:  b8 01 00 00 00 c3
+# description: Forces idMenuScreen_Shell_SnapmapHub::IsOnline to return 1 (true). Enables full SnapMap online layout (MY MAPS, BROWSE, CREATE), removes the offline 'GO ONLINE' banner tile, and allows multiplayer lobbies.
+wx b8 01 00 00 00 c3 @ 0x107E330
+
+# name: SnapmapMapInfo OnError Silence (Suppress Dialog 0xA1)
+# offset: 0x112A750
+# original: 48 89 5c 24 20
+# patched:  c3 90 90 90 90
+# description: Prevents idMenuScreen_Shell_SnapmapMapInfo::OnError from popping up dialog 0xA1 ('Failed to sign into DOOM Services').
+wx c3 90 90 90 90 @ 0x112A750
+
+# name: SnapBrowserHelper OnDownloadError Silence (Suppress Dialog 0xA1)
+# offset: 0xFD0230
+# original: 48 89 5c 24 10
+# patched:  c3 90 90 90 90
+# description: Prevents idSnapBrowserHelper::OnMapDownloadError from popping up dialog 0xA1 ('Failed to sign into DOOM Services').
+wx c3 90 90 90 90 @ 0xFD0230
+
+# name: SnapmapHub DOOM ID Prompt Silence (Suppress Dialog 0x73)
+# offset: 0x1082A70
+# original: 40 53 48 81 ec
+# patched:  c3 90 90 90 90
+# description: Prevents idMenuScreen_Shell_SnapmapHub::ShowScreen from prompting to create a DOOM ID / Bethesda account (dialog 0x73).
+wx c3 90 90 90 90 @ 0x1082A70
+
+# name: SnapBrowserHelper HandleNoResults Silence (Suppress Dialog 0x48E)
+# offset: 0xFCFD60
+# original: 48 89 74 24 18
+# patched:  c3 90 90 90 90
+# description: Prevents idSnapBrowserHelper::HandleNoResults from displaying the modal popup 'NOTICE: No results were found.' (dialog 0x48E).
+wx c3 90 90 90 90 @ 0xFCFD60
+
+# name: SnapmapHub GoOnline Action Instant Online (Bypass Network Auth)
+# offset: 0x1082280
+# original: 40 53 48 83 ec 20 33 c0 48 8b d9 48
+# patched:  c6 81 50 03 00 00 01 e9 a4 14 00 00
+# description: When clicking 'Go Online', immediately sets internal m_isOnline flag to 1 and triggers an instant Hub UI refresh without attempting network authentication.
+wx c6 81 50 03 00 00 01 e9 a4 14 00 00 @ 0x1082280
+
+# name: SnapmapMapInfo SetLoading Silence (Disable Map Info Loading Spinner)
+# offset: 0x109228C
+# original: b2 01
+# patched:  31 d2
+# description: Disables the infinite red stopwatch 'Loading...' spinner in idMenuScreen_Shell_SnapmapMapInfo::ShowScreen by passing bLoading=false to SetLoading, preventing the screen from getting stuck in an infinite loading state.
+wx 31 d2 @ 0x109228C
+
+# name: SnapmapHub ShowModalDialog Silence (Instant Tab Response)
+# offset: 0x107E1F4
+# original: e8 47 b5 f2 ff
+# patched:  90 90 90 90 90
+# description: Silences the call to ShowModalDialog('#str_snap_server_request_wait') in idMenuScreen_Shell_SnapmapHub::SelectTab, preventing the screen from locking input or showing a waiting modal dialog while tabs are being populated.
+wx 90 90 90 90 90 @ 0x107E1F4
+
+# name: SnapmapHub SetLoading Silence (Disable Hub Loading Spinner)
+# offset: 0x1084450
+# original: 48 89 6c 24 18
+# patched:  c3 90 90 90 90
+# description: Neutralizes idMenuScreen_Shell_SnapmapHub::SetLoading, immediately returning without playing 'rollOn' on the loading widget and preventing the infinite red stopwatch 'Loading...' spinner on the Hub screen.
+wx c3 90 90 90 90 @ 0x1084450
+
+# name: SnapmapHub All Tabs Force Enabled & Clickable (Full Menu Interaction)
+# offset: 0x1084103
+# original: 41 b0 01
+# patched:  45 31 c0
+# description: Forces r8b = 0 in idMenuScreen_Shell_SnapmapHub::UpdateTabs, unconditionally clearing the disabled 0x10 bit on all menu tabs (FEATURED, PLAY, CREATE, ME, FIND MATCH) and top-bar icons (Search, Feed), making the entire menu fully interactive and clickable.
+wx 45 31 c0 @ 0x1084103
+
+# name: SnapmapHub ShowScreen Skip Featured Cloud Query (Bypass Dead Hydra Requests)
+# offset: 0x1083067
+# original: e8 b4 2b 15 00
+# patched:  90 90 90 90 90
+# description: Bypasses asynchronous background query to unreachable Bethesda Hydra endpoints for online featured tiles in idMenuScreen_Shell_SnapmapHub::ShowScreen.
+wx 90 90 90 90 90 @ 0x1083067
+
+# name: SnapmapHub ShowScreen Skip Feed Cloud Query (Bypass Dead Hydra Requests)
+# offset: 0x1083130
+# original: e8 bb c8 13 00
+# patched:  90 90 90 90 90
+# description: Bypasses asynchronous background query to unreachable Bethesda Hydra endpoints for feed items in idMenuScreen_Shell_SnapmapHub::ShowScreen.
+wx 90 90 90 90 90 @ 0x1083130
+
+# name: RequestTabTiles Force Offline (Instant Local Tile Population)
+# offset: 0x11BF7CC
+# original: 0f 84 c2 00 00 00
+# patched:  e9 c3 00 00 00 90
+# description: Forces RequestTabTiles to unconditionally take the offline path (0x1411c0294), instantly loading tab tiles from local snapmap_offline/broadcasts/ JSON files without querying dead Bethesda servers.
+wx e9 c3 00 00 00 90 @ 0x11BF7CC
+
+# name: CheckLocalSavedMapIntegrity Bypass (Clear isDamaged & Force Clean Status)
+# offset: 0x15AA55D
+# original: 84 db 75 04 c6 47 40 01
+# patched:  e9 95 00 00 00 90 90 90
+# description: Bypasses the integrity and checksum failure branches in ReadGameDetailsAndVerify (leaving isDamaged = 0), allowing game.details to be fully parsed and preventing 'The save file appears to be damaged'.
+wx e9 95 00 00 00 90 90 90 @ 0x15AA55D
+
+# name: idSaveGame CheckFileIntegrity HMAC Bypass (Accept All User Profiles & Map Signatures)
+# offset: 0x19186B0
+# original: 40 55 56 57 41 54 41 55
+# patched:  b0 01 c3 90 90 90 90 90
+# description: Bypasses the 'CYBERDEMON' HMAC signature check in idSaveGame, accepting savegames, profiles, and downloaded SnapMap files (.verify) regardless of which SteamID or user account originally created them.
+wx b0 01 c3 90 90 90 90 90 @ 0x19186B0
+
+# name: GetLocalSavedMapEdit Bypass isDamaged Check (Allow Edit on All Maps)
+# offset: 0x11CB080
+# original: 0f 85 c3 01 00 00
+# patched:  90 90 90 90 90 90
+# description: Disables the isDamaged conditional jump in idModelManager::GetLocalSavedMapEdit, allowing maps to be edited even if flagged damaged.
+wx 90 90 90 90 90 90 @ 0x11CB080
+
+# name: ShowWaitingOverlay Bypass (Fix SnapMap Back/ESC Menu Lock)
+# offset: 0xFA9740
+# original: 40 57 48 83 ec 40
+# patched:  c3 90 90 90 90 90
+# description: Neutralizes idMenuManager_Shell::ShowWaitingOverlay. Prevents the modal waiting overlay from remaining active offline and locking the ESC / Back button in SnapMap menus.
+wx c3 90 90 90 90 90 @ 0xFA9740
+
+# name: GetCloudClient Force NULL (Enable Local Disk SnapMap Storage)
+# offset: 0x11DD1D0
+# original: 40 53 48 83 ec 20
+# patched:  31 c0 c3 90 90 90
+# description: Forces GetCloudClientForPrimaryUser to return NULL (0), causing LoadLocalStorageMaps to bypass dead Bethesda Hydra cloud queries and load all SNAPMAPS* files directly from the local savegame directory.
+wx 31 c0 c3 90 90 90 @ 0x11DD1D0
+
+# name: SnapmapMapInfo Allow Back When Unloaded
+# offset: 0x1090B4E
+# original: 74 65
+# patched:  90 90
+# description: Prevents SnapmapMapInfo from dropping user input and blocking ESC / Back button when map details are not loaded.
+wx 90 90 @ 0x1090B4E
+
+# name: SnapmapMapInfo Allow Back When Busy
+# offset: 0x1090B7E
+# original: 7f e5
+# patched:  90 90
+# description: Prevents SnapmapMapInfo from dropping user input and blocking ESC / Back button when pending operations exist.
+wx 90 90 @ 0x1090B7E
+
+# name: LaunchLocalSnapMap Clear Offline Flag (Enable Multiplayer Match)
+# offset: 0xF9F597
+# original: 66 83 f2 08
+# patched:  66 83 e2 f7
+# description: Clears the MATCH_FLAG_OFFLINE (0x08) bit in matchParameters when launching local maps, allowing them to host as LAN multiplayer.
+wx 66 83 e2 f7 @ 0xF9F597
+
+# name: SnapmapBrowser Allow Back When Unloaded
+# offset: 0x10843F6
+# original: 74 34
+# patched:  90 90
+# description: Prevents idMenuScreen_Shell_SnapmapBrowser from dropping user input and blocking ESC / Back button when unloaded or no results.
+wx 90 90 @ 0x10843F6
+
+# name: SnapBrowserHelper Allow Back In All Browser Screens (Fix Back/ESC Lock)
+# offset: 0xFCF85C
+# original: 74 07
+# patched:  eb 10
+# description: Bypasses the m_isBusy / request count gate in idSnapBrowserHelper::HandleAction, allowing the Back / ESC action to immediately cancel pending operations, pop the screen, and return to the parent menu.
+wx eb 10 @ 0xFCF85C
+
+# name: LaunchSnapMapLobby Bypass Online Check (Dialog 0x5B Fix)
+# offset: 0xF9FE51
+# original: 75 62
+# patched:  eb 62
+# description: Bypasses the IsOnline() check in idMenuManager_Shell::LaunchSnapMapLobbyForPublishedMap, preventing dialog 0x5B ('You must be online to play SnapMap with others') and allowing local P2P matchmaking lobby creation offline.
+wx eb 62 @ 0xF9FE51
+
+# name: SnapmapHub ShowScreen Offline Bypass (Unlock FEATURED Screen)
+# offset: 0x1082D05
+# original: 0f 84 ed 00 00 00
+# patched:  eb 34 90 90 90 90
+# description: Bypasses the IsOnline() check in idMenuScreen_Shell_SnapmapHub::ShowScreen, allowing the Featured tab to populate its category tiles from local offline broadcasts without an active connection.
+wx eb 34 90 90 90 90 @ 0x1082D05
+
+# name: LaunchLocalSnapMap Force Co-op Lobby Mode (SetLobbyMode 1)
+# offset: 0xF9F5A2
+# original: 33 d2
+# patched:  b2 01
+# description: In LaunchLocalSnapMap, changes SetLobbyMode(0) to SetLobbyMode(1), enabling full multiplayer co-op lobby mode with 4 player slots and LAN invites instead of solo offline play.
+wx b2 01 @ 0xF9F5A2
+
+# name: PumpPrivilegeChecks Bypass (Fix Signing into DOOM Services Loop & Launch SnapMap)
+# offset: 0xFA4D84
+# original: 48 8b 0d 45 f1 df 04
+# patched:  e9 7e 03 00 00 90 90
+# description: Bypasses online Bethesda Hydra privilege check in idMenuManager_Shell::PumpPrivilegeChecks, routing directly to LaunchSnapmaps (0x140FA5B07). Prevents the infinite modal loop 'AVISO: Entrando nos serviços de DOOM.' (dialog 0x97 / #str_online_hydra_signing_in) and allows both Host and Player 2 to launch and join SnapMap immediately.
+wx e9 7e 03 00 00 90 90 @ 0xFA4D84
+
+# name: State_Game_Lobby_Host Keep Peers (Prevent Disconnect on Match Start)
+# offset: 0x19926AC
+# original: 74 29
+# patched:  90 90
+# description: Disables 'DisconnectAllPeers for Dedicated lobby before start' in idSessionLocal::State_Game_Lobby_Host. When starting the match from a SnapMap lobby, preserves all connected LAN peers (Player 2) and sends the game start packet instead of kicking them back to the main menu.
+wx 90 90 @ 0x19926AC
+
+# name: net_peerTimeoutDuringLoadMS 60s (Extend Peer Load Timeout for Co-op)
+# offset: 0x2002378
+# original: 31 30 30 30 30
+# patched:  36 30 30 30 30
+# description: Extends default peer timeout during map loading from 10 seconds to 60 seconds, preventing split-screen / simultaneous local instance loading lag from timing out peers.
+wx 36 30 30 30 30 @ 0x2002378
+
+# name: CheckHeartbeats Bypass Timeout Disconnect (Prevent Peer & Host Loading Drop)
+# offset: 0x17FB342
+# original: 0f 8e fe 05 00 00
+# patched:  e9 ff 05 00 00 90
+# description: Bypasses the heartbeat timeout disconnect checks in idSessionLocal::CheckHeartbeats. Unconditionally skips both the host-dropping-peer and client-dropping-host disconnect routines, allowing peers to wait indefinitely for the host to complete heavy map loading without getting kicked at 99%.
+wx e9 ff 05 00 00 90 @ 0x17FB342
+
+# name: MapFinishedLoading Bypass Peer Load Timeout (Infinite Peer Wait)
+# offset: 0x1586A06
+# original: 7e 05
+# patched:  eb 05
+# description: Bypasses the 10-second peer loading timeout (net_waitOnPeerToLoadTimer_Seconds) in MapFinishedLoading (Vulkan). Converts conditional jump (jle) to unconditional jump (jmp), ensuring the host waits indefinitely until all connected co-op peers finish map loading before launching in-game.
+wx eb 05 @ 0x1586A06
+
+# name: SnapshotDeltaListFull Bypass (Prevent Out-Of-Game Client Drop During Load)
+# offset: 0x198BF84
+# original: 0f 84 91 00 00 00
+# patched:  e9 92 00 00 00 90
+# description: Bypasses the delta list overflow drop routine in the snapshot builder. Prevents the host from kicking out-of-game peers at 99% loading with 'Disconnecting out-of-game client instead of sending snapshot delta because his delta list is full'.
+wx e9 92 00 00 00 90 @ 0x198BF84
+
+# name: ReliableQueueOverflow Bypass (Prevent Peer Drop on Message Queue Congestion)
+# offset: 0x1808BE2
+# original: 0f 85 78 04 00 00
+# patched:  e9 79 04 00 00 90
+# description: Bypasses the reliable message queue overflow drop routine in QueueReliableMessage, preventing peer disconnects when network message queues congest during heavy map loading.
+wx e9 79 04 00 00 90 @ 0x1808BE2
+
+# name: PostMatchReturnToLobby Validation Bypass (Ensure Clean Return to Lobby)
+# offset: 0xFA11B0
+# original: 40 53 48 83 ec 20
+# patched:  b0 01 c3 90 90 90
+# description: Forces lobby player count validation to always return 1 (true) in idMenuManager_Shell::State_Transition_Game_Lobby, ensuring both players return safely to the SnapMap lobby (SALA DE PARTIDA) at the end of a match without dialog 0xD5.
+wx b0 01 c3 90 90 90 @ 0xFA11B0
+
+# DOOMLegacyMod reimplemented
+# name: Restore noClip CVar Default Off
+# offset: 0xDB4CA5
+# original: 80 a7 46 ce 00 00 e3 80 8f 46 ce 00 00 80
+# patched:  80 a7 46 ce 00 00 e3 80 8f 46 ce 00 00 80
+# description: Restores the original player-flag initializer. The existing
+#              noClip cvar remains available and defaults off. Enable it with
+#              `noClip 1` or `noclip`.
+wx 80 a7 46 ce 00 00 e3 80 8f 46 ce 00 00 80 @ 0xDB4CA5
+
+# name: Restore cheat CVar Defaults Off
+# offset: 0xDB467B
+# original: 88 9f a8 5e 04 00 80 a7 a9 5e 04 00 fe
+# patched:  88 9f a8 5e 04 00 80 a7 a9 5e 04 00 fe
+# description: Restores the original initializer for infiniteHealth,
+#              noPlayerDeath, noPlayerKill, and noTarget. They remain settable
+#              from the console and default off.
+wx 88 9f a8 5e 04 00 80 a7 a9 5e 04 00 fe @ 0xDB467B
+
+# name: AddCommand Flags Unlock (DLL flags hook equivalent, part 1)
+# offset: 0x296A1A
+# original: 83 c8 04
+# patched:  83 c8 06
+# description: Changes `or eax,4` to `or eax,6` in the command registration
+#              flag calculation. This is the static equivalent of the DLL's
+#              `flags |= 6` detour.
+wx 83 c8 06 @ 0x296A1A
+
+# name: AddCommand Flags Unlock (DLL flags hook equivalent, part 2)
+# offset: 0x296A23
+# original: 80 e1 02
+# patched:  80 c9 02
+# description: Changes `and cl,2` to `or cl,2` so the later conditional move
+#              cannot restore the un-unlocked flags. Together with the previous
+#              patch this produces flags | 6 for every registered command.
+wx 80 c9 02 @ 0x296A23
+
+# name: AddCvar Flags Unlock (DLL r9 hook equivalent)
+# offset: 0x293E8A
+# original: f7 c7 10 00 03 00
+# patched:  83 cf 10 90 90 90
+# description: Replaces `test edi,0x30010` with `or edi,0x10` plus three NOPs.
+#              This forces cvar flag bit 4 for every registration, matching the
+#              DLL's `or r9d,0x10` detour, and preserves the surrounding logic.
+wx 83 cf 10 90 90 90 @ 0x293E8A

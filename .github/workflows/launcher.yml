@@ -1,0 +1,36 @@
+name: Build Launcher
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Install Visual Studio Build Tools
+        shell: pwsh
+        run: |
+          choco install visualstudio2022buildtools `
+            --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended" `
+            -y
+          choco install cmake -y
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          cd Launcher
+          cmake . -B build -G "Visual Studio 18 2026"
+          cmake --build build --config Release --parallel %NUMBER_OF_PROCESSORS%
+
+      - name: Upload artifact/s
+        uses: actions/upload-artifact@v6
+        with:
+          name: Launcher
+          path: |
+            Launcher/build/Release

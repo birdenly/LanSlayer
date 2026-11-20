@@ -1,0 +1,65 @@
+﻿name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag (example: 1.0.0)"
+        required: false
+        type: string
+      prerelease:
+        description: "Mark as prerelease"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+
+jobs:
+  xdelta_steam:
+    uses: ./.github/workflows/xdelta_steam.yml
+
+  launcher_linux:
+    uses: ./.github/workflows/launcher_linux.yml
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [xdelta_steam, launcher_linux]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download DLL and launcher artifacts
+        uses: actions/download-artifact@v8
+        with:
+          pattern: "*"
+          path: artifacts
+          merge-multiple: true
+
+      - name: Package
+        run: |
+          mkdir -p package
+
+          find artifacts -type f -exec cp {} package/ \;
+
+          if [ -d Launcher/patches ]; then
+            cp -r Launcher/patches package/
+          fi
+
+          cd package
+          zip -r ../LanSlayer.zip .
+          cd ..
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          prerelease: ${{ inputs.prerelease == 'true' }}
+          files: LanSlayer.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

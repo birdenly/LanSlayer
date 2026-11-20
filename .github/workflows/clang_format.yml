@@ -1,0 +1,33 @@
+name: Clang Format
+
+on:
+  push:
+    paths:
+      - 'Launcher/src/**'
+  pull_request:
+    paths:
+      - 'Launcher/src/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Apply clang-format
+        run: |
+          find Launcher/src -type f \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' -o -name '*.cc' -o -name '*.hh' \) \
+              -exec clang-format -i {} \;
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "style: apply clang-format"
