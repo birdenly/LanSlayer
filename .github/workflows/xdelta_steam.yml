@@ -5,6 +5,7 @@ name: Build XDelta (Steam)
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   download:

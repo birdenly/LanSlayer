@@ -9,8 +9,8 @@ A fan project bringing LAN multiplayer to DOOM (2016)
 </p>
 
 <p align="center">
-  <a href="https://discord.gg/NTH9eayrKc">
-    <img src="https://img.shields.io/discord/placeholder?label=Discord&logo=discord">
+  <a href="https://discord.gg/PvYPamMVes">
+    <img src="https://img.shields.io/discord/1573429779670110399?label=Discord&logo=discord">
   </a>
   <a href="https://fluxer.gg/zzT8x6jO">
     <img src="https://img.shields.io/badge/Fluxer-Join-7C5CFC?logo=fluxer&logoColor=white">

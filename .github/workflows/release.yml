@@ -34,7 +34,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download DLL and launcher artifacts
+      - name: Download xdeltas and launcher artifacts
         uses: actions/download-artifact@v8
         with:
           pattern: "*"
