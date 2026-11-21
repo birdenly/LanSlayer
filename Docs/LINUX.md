@@ -11,7 +11,7 @@ Use CachyOS/GE-proton or some other proton fork otherwise the fix files won't wo
 Put the [fix files](../protonfixes) into `~/.config/protonfixes/localfixes` . Set `PROTONFIXES_DISABLE=1` if you'd like to disable the fix.
 
 ### Extract relative to the game folder
-Extract `LanSlayer.zip` from releases to <GameDir>/LanSlayer .
+Extract `LanSlayer.zip` from releases to `<GameDir>/LanSlayer` .
 
 ### 1. Patch the game
 Run the launcher > go to patcher and press apply patch after selecting the game directory, have fun playing
