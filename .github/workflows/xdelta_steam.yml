@@ -24,7 +24,7 @@ jobs:
         run: |
           mkdir -p "$HOME/depotdownloader"
           cd "$HOME/depotdownloader"
-          curl -fsSL https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_3.4.0/DepotDownloader-linux-x64.zip -o depotdownloader.zip
+          curl -fsSL https://github.com/SteamRE/DepotDownloader/releases/latest/download/DepotDownloader-linux-x64.zip -o depotdownloader.zip
           unzip depotdownloader.zip
           chmod +x DepotDownloader
 

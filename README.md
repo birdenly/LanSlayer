@@ -54,7 +54,6 @@ All players enter SnapMap, go to **PLAY** -> **Featured Maps** -> Select ANY map
 ---
 
 ### What's not done (TODO):
-* Fix 1 player multiplayer ending shortly (Not practice mode)
 * GOG support? (need to figure out a way to get the game with mp files there, also not sure if the current xdeltas are compatible)
 * Dedicated server support with RCON
 
