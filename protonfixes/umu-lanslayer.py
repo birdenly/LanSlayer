@@ -1,7 +1,9 @@
 ﻿"""DOOM 2016"""
 
-# Same fix file but for outside of steam
-# Only difference is the hijack part not being in this one
+# Same fix for non-Steam versions.
+# The hijack part is omitted here.
+# Sets the CWD to the parent directory since launchers usually set it (On steam its same place as DOOMx64.exe is in)
+# to the directory containing launched exe, which would prevent the CChroma DLL from being replaced.
 
 import os
 import shutil
@@ -14,6 +16,12 @@ from protonfixes import util
 def main() -> None:
     # Needed since GBE is being used
     util.set_environment('PROTON_DISABLE_LSTEAMCLIENT', '1')
+
+    # Install MFC runtime
+    util.protontricks('mfc140')
+
+    # Go to the parent directory since the launcher is game's installed to a folder there.
+    os.chdir('..')
 
     # Install CChromaEditorLibrary
     installpath = os.path.abspath(os.getcwd())
@@ -28,6 +36,3 @@ def main() -> None:
         )
         with zipfile.ZipFile('CChromaEditorLibrary.zip', 'r') as zip_ref:
             zip_ref.extractall(installpath)
-
-    # Install MFC runtime
-    util.protontricks('mfc140')

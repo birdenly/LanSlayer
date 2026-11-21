@@ -12,6 +12,9 @@ def main() -> None:
     # Needed since GBE is being used
     util.set_environment('PROTON_DISABLE_LSTEAMCLIENT', '1')
 
+    # Install MFC runtime
+    util.protontricks('mfc140')
+
     # Hijack the game process
     util.replace_command(
         r'.*DOOMx64(?:vk)?\.exe$',
@@ -31,6 +34,3 @@ def main() -> None:
         )
         with zipfile.ZipFile('CChromaEditorLibrary.zip', 'r') as zip_ref:
             zip_ref.extractall(installpath)
-
-    # Install MFC runtime
-    util.protontricks('mfc140')
