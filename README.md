@@ -54,8 +54,9 @@ All players enter SnapMap, go to **PLAY** -> **Featured Maps** -> Select ANY map
 ---
 
 ### What's not done (TODO):
-* GOG support? (need to figure out a way to get the game with mp files there, also not sure if the current xdeltas are compatible)
 * Dedicated server support with RCON
+* Coop for the story mode (Like synergy for half life 2)
+* GOG support? (need to figure out a way to get the game with mp files there, also not sure if the current xdeltas are compatible)
 
 ## Credits
 - birden
